@@ -1,0 +1,16 @@
+{
+    "isMirror": true,
+    "isDebug": false,
+    "isAnitalias": false,
+    "offThreshold": {},
+    "onThreshold": {},
+    "headOffset": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+    },
+    "canvas": {
+        "width": 1280,
+        "height": 720
+    }
+}

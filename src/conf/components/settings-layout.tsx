@@ -14,6 +14,7 @@ import {
   SettingsDeviceToggler,
 } from "./settings-device-selector";
 import StreamController from "./stream-controller";
+import { loadAvatar } from "../vrm/scene";
 
 interface Props {
   stream: MediaStream;
@@ -65,124 +66,130 @@ const SettingsLayout: FunctionComponent<Props> = ({
   onClickToggleAudioMuted,
   onClickEnableUserVideo,
   onClickDisableUserVideo,
-  onClickEnableDisplayVideo,
-  onClickDisableDisplayVideo,
+  // onClickEnableDisplayVideo,
+  // onClickDisableDisplayVideo,
   onChangeDispName,
   onClickCloseSettings,
   onClickJoinConference,
 }: Props) => (
-  <Modal>
-    <div css={wrapperStyle}>
-      <div css={videoStyle}>
-        <Video
-          stream={stream}
-          isReverse={videoType === "camera"}
-          isVideoOnly={true}
-        />
-        <div css={controllerStyle}>
-          <StreamController
-            displayName={`v${browser.version}`}
-            browser={browser}
-            controllers={
-              <>
-                {videoType === null ? null : (
+    <Modal>
+      <div css={wrapperStyle}>
+        <div css={videoStyle}>
+          <Video
+            stream={stream}
+            isReverse={videoType === "camera"}
+            isVideoOnly={true}
+          />
+          <div css={controllerStyle}>
+            <StreamController
+              displayName={`v${browser.version}`}
+              browser={browser}
+              controllers={
+                <>
+                  {videoType === null ? null : (
+                    <IconButton
+                      name={isVideoTrackMuted ? "videocam_off" : "videocam"}
+                      title={isVideoTrackMuted ? "Unmute video" : "Mute video"}
+                      onClick={onClickToggleVideoMuted}
+                    />
+                  )}
                   <IconButton
-                    name={isVideoTrackMuted ? "videocam_off" : "videocam"}
-                    title={isVideoTrackMuted ? "Unmute video" : "Mute video"}
-                    onClick={onClickToggleVideoMuted}
+                    name={isAudioTrackMuted ? "mic_off" : "mic"}
+                    title={isAudioTrackMuted ? "Unmute audio" : "Mute audio"}
+                    onClick={onClickToggleAudioMuted}
+                  />
+                </>
+              }
+            />
+          </div>
+        </div>
+
+        <div css={settingsStyle}>
+          <SettingsItemName label="NAME">
+            <SettingsNameEdit
+              defaultDispName={defaultDispName}
+              isInvalid={!isDisplayNameValid}
+              onChangeDispName={onChangeDispName}
+            />
+          </SettingsItemName>
+          <SettingsItemDevice label="MIC.">
+            <SettingsDeviceToggler label="Disable" disabled={true} />
+            <SettingsDeviceSelector
+              deviceId={audioDeviceId || ""}
+              inDevices={audioInDevices}
+              onChangeDeviceId={onChangeAudioDeviceId}
+            />
+          </SettingsItemDevice>
+          {hasUserVideoDevice ? (
+            <SettingsItemDevice label="CAMERA">
+              {videoType === "camera" ? (
+                <>
+                  <SettingsDeviceToggler
+                    label="Disable"
+                    onClick={onClickDisableUserVideo}
+                  />
+                  <SettingsDeviceSelector
+                    deviceId={videoDeviceId || ""}
+                    inDevices={videoInDevices}
+                    onChangeDeviceId={onChangeVideoDeviceId}
+                  />
+                </>
+              ) : (
+                  <SettingsDeviceToggler
+                    label="Enable"
+                    onClick={onClickEnableUserVideo}
                   />
                 )}
-                <IconButton
-                  name={isAudioTrackMuted ? "mic_off" : "mic"}
-                  title={isAudioTrackMuted ? "Unmute audio" : "Mute audio"}
-                  onClick={onClickToggleAudioMuted}
-                />
-              </>
-            }
-          />
+            </SettingsItemDevice>
+          ) : null}
+          {hasGetDisplayMedia ? (
+            <SettingsItemDevice label="VRM">
+              {
+                <>
+                  <SettingsDeviceToggler
+                    label="Import"
+                    onClick={importFiles}
+                  />
+                  <input type="file" id="importFile" ref={fileRef} />
+                </>
+                /* {videoType === "display" ? (
+                // <>
+                //   <SettingsDeviceToggler
+                //     label="Use another dispaly"
+                //     onClick={onClickEnableDisplayVideo}
+                //   />
+                // </>
+              ): (
+                  <SettingsDeviceToggler
+                    label = "Enable"
+                    onClick = { onClickEnableDisplayVideo }
+                  />
+                )} */
+              }
+            </SettingsItemDevice>
+
+          ) : null}
+        </div>
+
+        <div css={buttonWrapStyle}>
+          <button
+            css={doneButtonStyle}
+            onClick={isJoined ? onClickCloseSettings : onClickJoinConference}
+            disabled={isReEntering || !isDisplayNameValid}
+          >
+            {isReEntering ? (
+              "RE-ENTERING THE ROOM"
+            ) : (
+                <>
+                  <Icon name={isJoined ? "done" : "meeting_room"} />
+                  <span>{isJoined ? "CLOSE SETTINGS" : "ENTER THIS ROOM"}</span>
+                </>
+              )}
+          </button>
         </div>
       </div>
-
-      <div css={settingsStyle}>
-        <SettingsItemName label="NAME">
-          <SettingsNameEdit
-            defaultDispName={defaultDispName}
-            isInvalid={!isDisplayNameValid}
-            onChangeDispName={onChangeDispName}
-          />
-        </SettingsItemName>
-        <SettingsItemDevice label="MIC.">
-          <SettingsDeviceToggler label="Disable" disabled={true} />
-          <SettingsDeviceSelector
-            deviceId={audioDeviceId || ""}
-            inDevices={audioInDevices}
-            onChangeDeviceId={onChangeAudioDeviceId}
-          />
-        </SettingsItemDevice>
-        {hasUserVideoDevice ? (
-          <SettingsItemDevice label="CAMERA">
-            {videoType === "camera" ? (
-              <>
-                <SettingsDeviceToggler
-                  label="Disable"
-                  onClick={onClickDisableUserVideo}
-                />
-                <SettingsDeviceSelector
-                  deviceId={videoDeviceId || ""}
-                  inDevices={videoInDevices}
-                  onChangeDeviceId={onChangeVideoDeviceId}
-                />
-              </>
-            ) : (
-              <SettingsDeviceToggler
-                label="Enable"
-                onClick={onClickEnableUserVideo}
-              />
-            )}
-          </SettingsItemDevice>
-        ) : null}
-        {hasGetDisplayMedia ? (
-          <SettingsItemDevice label="DISPLAY">
-            {videoType === "display" ? (
-              <>
-                <SettingsDeviceToggler
-                  label="Disable"
-                  onClick={onClickDisableDisplayVideo}
-                />
-                <SettingsDeviceToggler
-                  label="Use another dispaly"
-                  onClick={onClickEnableDisplayVideo}
-                />
-              </>
-            ) : (
-              <SettingsDeviceToggler
-                label="Enable"
-                onClick={onClickEnableDisplayVideo}
-              />
-            )}
-          </SettingsItemDevice>
-        ) : null}
-      </div>
-
-      <div css={buttonWrapStyle}>
-        <button
-          css={doneButtonStyle}
-          onClick={isJoined ? onClickCloseSettings : onClickJoinConference}
-          disabled={isReEntering || !isDisplayNameValid}
-        >
-          {isReEntering ? (
-            "RE-ENTERING THE ROOM"
-          ) : (
-            <>
-              <Icon name={isJoined ? "done" : "meeting_room"} />
-              <span>{isJoined ? "CLOSE SETTINGS" : "ENTER THIS ROOM"}</span>
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  </Modal>
-);
+    </Modal >
+  );
 
 export default SettingsLayout;
 
@@ -233,3 +240,20 @@ const doneButtonStyle = css({
     backgroundColor: globalColors.gray,
   },
 });
+
+
+// XXX
+let fileRef = React.createRef<HTMLInputElement>();
+const importFiles = () => {
+  if (!fileRef.current) return;
+  const files = fileRef.current.files;
+
+  if (!files) return;
+  const file = files[0];
+
+  if (!file) return;
+
+  const blob = new Blob([files[0]], { type: "application/octet-stream" });
+  const url = URL.createObjectURL(blob);
+  loadAvatar(url);
+}

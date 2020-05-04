@@ -1,4 +1,5 @@
 import { UserDevices } from "./types";
+import { drawCanvas, initFaceDetection } from "../vrm/scene";
 
 export const getUserDevices = async (
   options: MediaStreamConstraints
@@ -46,12 +47,15 @@ export const getUserAudioTrack = async (
 export const getUserVideoTrack = async (
   deviceId: string
 ): Promise<MediaStreamTrack> => {
-  const constraints =
-    deviceId === "" ? true : { deviceId: { exact: deviceId } };
+  //const constraints =
+  //  deviceId === "" ? true : { deviceId: { exact: deviceId } };
 
-  return navigator.mediaDevices
-    .getUserMedia({ video: constraints })
-    .then((stream) => stream.getVideoTracks()[0]);
+  initFaceDetection(deviceId);
+
+  // return navigator.mediaDevices
+  //   .getUserMedia({ video: constraints })
+  //   .then((stream) => stream.getVideoTracks()[0]);
+  return drawCanvas.captureStream().getVideoTracks()[0];
 };
 
 export const getDisplayVideoTrack = async (): Promise<MediaStreamTrack> => {
